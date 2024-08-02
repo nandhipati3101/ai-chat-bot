@@ -1,0 +1,43 @@
+pip install transformers torch
+from transformers import GPT2LMHeadModel, GPT2Tokenizer
+import torch
+
+class ContextWizChatbot:
+    def __init__(self):
+        self.tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
+        self.model = GPT2LMHeadModel.from_pretrained('gpt2')
+        self.context = ""
+
+    def update_context(self, user_input):
+        """Append the user input to the context."""
+        self.context += f"User: {user_input}\n"
+
+    def generate_response(self):
+        """Generate a response based on the current context."""
+        inputs = self.tokenizer.encode(self.context, return_tensors='pt')
+        outputs = self.model.generate(inputs, max_length=1000, pad_token_id=self.tokenizer.eos_token_id)
+        response = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
+        return response
+
+    def chat(self, user_input):
+        """Process the user input and return a response."""
+        self.update_context(user_input)
+        response = self.generate_response()
+        # Extract response part
+        response_text = response.split("User:")[-1].strip()
+        self.context += f"Bot: {response_text}\n"
+        return response_text
+
+# Example usage
+if __name__ == "__main__":
+    chatbot = ContextWizChatbot()
+    print("Chatbot: Hello! How can I assist you today?")
+    
+    while True:
+        user_input = input("You: ")
+        if user_input.lower() in ['exit', 'quit', 'bye']:
+            print("Chatbot: Goodbye!")
+            break
+        
+        response = chatbot.chat(user_input)
+        print(f"Chatbot: {response}")
